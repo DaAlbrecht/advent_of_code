@@ -22,8 +22,8 @@ fn part_02(input: &String) -> u32 {
     input
         .lines()
         .map(|line| {
-            let mut line = line.replace("one", "on1e");
-            line = line
+            let line = line
+                .replace("one", "on1e")
                 .replace("two", "tw2o")
                 .replace("three", "thr3ee")
                 .replace("four", "fou4r")
