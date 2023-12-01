@@ -23,15 +23,16 @@ fn part_02(input: &String) -> u32 {
         .lines()
         .map(|line| {
             let line = line
-                .replace("one", "on1e")
-                .replace("two", "tw2o")
-                .replace("three", "thr3ee")
-                .replace("four", "fou4r")
-                .replace("five", "fiv5e")
-                .replace("six", "si6x")
-                .replace("seven", "se7ven")
-                .replace("eight", "eigh8t")
-                .replace("nine", "ni9ne");
+                .replace("one", "one1one")
+                .replace("two", "two2two")
+                .replace("three", "three3three")
+                .replace("four", "four4four")
+                .replace("five", "five5five")
+                .replace("six", "six6six")
+                .replace("seven", "seven7seven")
+                .replace("eight", "eight8eight")
+                .replace("nine", "nine9nine");
+
             line.chars()
                 .filter_map(|c| c.to_digit(10))
                 .collect::<Vec<u32>>()
