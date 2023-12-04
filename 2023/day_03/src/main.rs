@@ -40,24 +40,37 @@ fn part_01(input: &str) -> u32 {
         .iter()
         .filter(|p| part_has_ajacent_symbol(p, symbols.clone()))
         .map(|p| p.serial_number)
+        .inspect(|x| println!("{}", x))
         .sum()
 }
 
 fn parse_digits(y_pos: usize, line: &str) -> Vec<MachinePart> {
-    line.split(|c: char| !c.is_numeric())
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let serial_number = s.parse::<u32>().unwrap();
-            let start = line.find(s).unwrap();
-            let end = start + s.len() - 1;
-            MachinePart {
-                serial_number,
-                x_start: start,
-                x_end: end,
+    let mut iter = line.chars().enumerate().peekable();
+    let mut machine_parts: Vec<MachinePart> = Vec::new();
+
+    while let Some((i, c)) = iter.next() {
+        if c.is_digit(10) {
+            let x_start = i;
+            let x_end = x_start
+                + iter
+                    .by_ref()
+                    .take_while(|(_, next_char)| next_char.is_digit(10))
+                    .count();
+
+            let number_str: String = line[x_start..=x_end].chars().collect();
+            let number: u32 = number_str.parse().unwrap();
+
+            let machine_part = MachinePart {
+                serial_number: number,
+                x_start,
+                x_end,
                 y_pos,
-            }
-        })
-        .collect::<Vec<_>>()
+            };
+
+            machine_parts.push(machine_part);
+        }
+    }
+    machine_parts
 }
 
 fn parse_symbols(y_pos: usize, input: &str, available_symbols: Vec<char>) -> Vec<Symbol> {
@@ -115,5 +128,11 @@ mod tests {
 ...$.*....
 .664.598..";
         assert_eq!(crate::part_01(input), 4361);
+    }
+
+    #[test]
+    fn larger_test() {
+        let input = std::fs::read_to_string("test").unwrap();
+        assert_eq!(crate::part_01(&input), 2781);
     }
 }
