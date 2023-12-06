@@ -1,7 +1,7 @@
-use itertools::Itertools;
+mod part_02;
 
 #[derive(Debug)]
-enum Maps {
+pub enum Maps {
     Seed2Soil(Vec<GardenMap>),
     Soil2Fertilizer(Vec<GardenMap>),
     Fertilizer2Water(Vec<GardenMap>),
@@ -11,8 +11,8 @@ enum Maps {
     Humidity2Location(Vec<GardenMap>),
 }
 
-#[derive(Debug)]
-struct Seed {
+#[derive(Debug, Default)]
+pub struct Seed {
     id: u64,
     soil: Option<u64>,
     fertilizer: Option<u64>,
@@ -23,26 +23,11 @@ struct Seed {
     location: Option<u64>,
 }
 
-impl Default for Seed {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            soil: None,
-            fertilizer: None,
-            water: None,
-            light: None,
-            temperature: None,
-            humidity: None,
-            location: None,
-        }
-    }
-}
-
 #[derive(Debug)]
-struct GardenMap {
-    source: u64,
-    target: u64,
-    range: u64,
+pub struct GardenMap {
+    pub source: u64,
+    pub target: u64,
+    pub range: u64,
 }
 
 impl From<(u32, u32, u32)> for GardenMap {
@@ -57,8 +42,8 @@ impl From<(u32, u32, u32)> for GardenMap {
 
 fn main() {
     let input = std::fs::read_to_string("puzzle").unwrap();
-    //print!("part 01: {}", part_01(&input));
-    print!("part 02: {}", part_02(&input));
+    println!("Part 01: {}", part_01(&input));
+    println!("Part 02: {}", part_02::part_02(&input));
 }
 
 fn part_01(input: &str) -> u64 {
@@ -77,64 +62,7 @@ fn part_01(input: &str) -> u64 {
         .unwrap()
 }
 
-fn part_02(input: &str) -> u64 {
-    let mut seeds = parse_seeds_part02(input);
-    let maps = parse_maps(input);
-    maps.iter().for_each(|map| {
-        seeds.iter_mut().for_each(|seed| {
-            generate_seed_for_map(seed, map);
-        });
-    });
-
-    seeds
-        .iter()
-        .map(|seed| seed.location.unwrap())
-        .max()
-        .unwrap()
-}
-
-fn parse_seeds_part02(input: &str) -> Vec<Seed> {
-    input
-        .lines()
-        .take_while(|line| !line.is_empty())
-        .map(|line| {
-            let chunks = line
-                .strip_prefix("seeds: ")
-                .expect("puzzle to start with 'Seeds: '")
-                .split(' ')
-                .chunks(2);
-
-            let chunks = chunks.into_iter();
-
-            let ids = chunks
-                .map(|chunk| {
-                    let mut chunk = chunk;
-                    let seed = chunk
-                        .next()
-                        .unwrap()
-                        .parse::<u32>()
-                        .expect("seed to be a number");
-                    let range = chunk
-                        .next()
-                        .unwrap()
-                        .parse::<u32>()
-                        .expect("range to be a number");
-                    (seed..seed + range).collect::<Vec<_>>()
-                })
-                .flatten()
-                .collect::<Vec<_>>();
-            ids.iter()
-                .map(|id| Seed {
-                    id: *id as u64,
-                    ..Default::default()
-                })
-                .collect::<Vec<_>>()
-        })
-        .flatten()
-        .collect::<Vec<_>>()
-}
-
-fn parse_maps(input: &str) -> Vec<Maps> {
+pub fn parse_maps(input: &str) -> Vec<Maps> {
     input
         .split("\n\n")
         .skip(1)
@@ -216,14 +144,13 @@ fn parse_seeds(input: &str) -> Vec<Seed> {
     let seeds = input
         .lines()
         .take_while(|line| !line.is_empty())
-        .map(|line| {
+        .flat_map(|line| {
             line.strip_prefix("seeds: ")
                 .expect("puzzle to start with 'Seeds: '")
                 .split(' ')
                 .map(|seed| seed.parse::<u32>().expect("seed to be a number"))
                 .collect::<Vec<_>>()
         })
-        .flatten()
         .collect::<Vec<_>>();
     seeds
         .iter()
@@ -234,16 +161,16 @@ fn parse_seeds(input: &str) -> Vec<Seed> {
         .collect::<Vec<_>>()
 }
 
-fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
+pub fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
     match map {
         Maps::Seed2Soil(garden_maps) => {
             garden_maps.iter().for_each(|garden_map| {
                 //check if source is in the range of garden_map.source .. garden_map.source + garden_map.range
                 if garden_map.source <= seed.id && seed.id <= garden_map.source + garden_map.range {
                     let difference = seed.id - garden_map.source;
-                    seed.soil = Some(garden_map.target as u64 + difference as u64);
+                    seed.soil = Some(garden_map.target + difference);
                 } else if seed.soil.is_none() {
-                    seed.soil = Some(seed.id as u64);
+                    seed.soil = Some(seed.id);
                 }
             });
         }
@@ -254,9 +181,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.soil.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.soil.unwrap() - garden_map.source;
-                    seed.fertilizer = Some(garden_map.target as u64 + difference as u64);
+                    seed.fertilizer = Some(garden_map.target + difference);
                 } else if seed.fertilizer.is_none() {
-                    seed.fertilizer = Some(seed.soil.unwrap() as u64);
+                    seed.fertilizer = Some(seed.soil.unwrap());
                 }
             });
         }
@@ -267,9 +194,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.fertilizer.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.fertilizer.unwrap() - garden_map.source;
-                    seed.water = Some(garden_map.target as u64 + difference as u64);
+                    seed.water = Some(garden_map.target + difference);
                 } else if seed.water.is_none() {
-                    seed.water = Some(seed.fertilizer.unwrap() as u64);
+                    seed.water = Some(seed.fertilizer.unwrap());
                 }
             });
         }
@@ -280,9 +207,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.water.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.water.unwrap() - garden_map.source;
-                    seed.light = Some(garden_map.target as u64 + difference as u64);
+                    seed.light = Some(garden_map.target + difference);
                 } else if seed.light.is_none() {
-                    seed.light = Some(seed.water.unwrap() as u64);
+                    seed.light = Some(seed.water.unwrap());
                 }
             });
         }
@@ -293,9 +220,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.light.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.light.unwrap() - garden_map.source;
-                    seed.temperature = Some(garden_map.target as u64 + difference as u64);
+                    seed.temperature = Some(garden_map.target + difference);
                 } else if seed.temperature.is_none() {
-                    seed.temperature = Some(seed.light.unwrap() as u64);
+                    seed.temperature = Some(seed.light.unwrap());
                 }
             });
         }
@@ -306,9 +233,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.temperature.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.temperature.unwrap() - garden_map.source;
-                    seed.humidity = Some(garden_map.target as u64 + difference as u64);
+                    seed.humidity = Some(garden_map.target + difference);
                 } else if seed.humidity.is_none() {
-                    seed.humidity = Some(seed.temperature.unwrap() as u64);
+                    seed.humidity = Some(seed.temperature.unwrap());
                 }
             });
         }
@@ -319,9 +246,9 @@ fn generate_seed_for_map(seed: &mut Seed, map: &Maps) {
                     && seed.humidity.unwrap() <= garden_map.source + garden_map.range
                 {
                     let difference = seed.humidity.unwrap() - garden_map.source;
-                    seed.location = Some(garden_map.target as u64 + difference as u64);
+                    seed.location = Some(garden_map.target + difference);
                 } else if seed.location.is_none() {
-                    seed.location = Some(seed.humidity.unwrap() as u64);
+                    seed.location = Some(seed.humidity.unwrap());
                 }
             });
         }
@@ -335,10 +262,5 @@ mod tests {
     fn part_01() {
         let input = std::fs::read_to_string("test").unwrap();
         assert_eq!(crate::part_01(&input), 35);
-    }
-    #[test]
-    fn part_02() {
-        let input = std::fs::read_to_string("test").unwrap();
-        assert_eq!(crate::part_02(&input), 46);
     }
 }
