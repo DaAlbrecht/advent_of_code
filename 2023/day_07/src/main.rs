@@ -17,6 +17,19 @@ impl From<Vec<Card>> for Hands {
         }
 
         let mut counts = counts.into_iter().collect::<Vec<_>>();
+
+        if value.contains(&Card::Joker) {
+            let jokers = value.iter().filter(|c| **c == Card::Joker).count();
+
+            if jokers == 5 {
+                return Hands::FiveOfAKind(value);
+            }
+
+            counts.retain(|(card, _)| **card != Card::Joker);
+
+            counts.sort_by(|a, b| b.1.cmp(&a.1));
+            counts[0].1 += jokers;
+        }
         counts.sort_by(|a, b| b.1.cmp(&a.1));
         match counts[0].1 {
             5 => Hands::FiveOfAKind(value),
@@ -36,7 +49,9 @@ impl From<Vec<Card>> for Hands {
                 }
             }
             1 => Hands::HighCard(value),
-            _ => panic!("invalid card"),
+            _ => {
+                panic!("invalid Hand")
+            }
         }
     }
 }
@@ -136,8 +151,9 @@ impl Ord for Hands {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Copy, Clone)]
 enum Card {
+    Joker,
     Two,
     Three,
     Four,
@@ -177,6 +193,7 @@ impl From<char> for Card {
 fn main() {
     let input = std::fs::read_to_string("puzzle").expect("file not found");
     println!("Part 01: {}", part_01(&input));
+    println!("Part 02: {}", part_02(&input));
 }
 
 fn part_01(input: &str) -> u64 {
@@ -199,6 +216,30 @@ fn part_01(input: &str) -> u64 {
         .sum::<u64>()
 }
 
+fn part_02(input: &str) -> u64 {
+    let mut games = input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = line.split_once(" ").expect("invalid input");
+            let bid = bid.parse::<u64>().expect("invalid input");
+            let cards = cards.chars().map(|c| c.into()).collect::<Vec<Card>>();
+            let cards = cards
+                .iter()
+                .map(|c| if *c == Card::J { Card::Joker } else { *c })
+                .collect::<Vec<_>>();
+            let hands: Hands = cards.into();
+            (hands, bid)
+        })
+        .collect::<Vec<(Hands, u64)>>();
+
+    games.sort_by(|a, b| a.0.cmp(&b.0));
+    games
+        .iter()
+        .enumerate()
+        .map(|(i, (_, bid))| (i as u64 + 1) * bid)
+        .sum::<u64>()
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -206,5 +247,11 @@ mod tests {
     fn part_01() {
         let input = std::fs::read_to_string("test").unwrap();
         assert_eq!(super::part_01(&input), 6440);
+    }
+
+    #[test]
+    fn part_02() {
+        let input = std::fs::read_to_string("test").unwrap();
+        assert_eq!(super::part_02(&input), 5905);
     }
 }
