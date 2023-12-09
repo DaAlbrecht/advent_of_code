@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 enum Hands {
     FiveOfAKind(Vec<Card>),
     FourOfAKind(Vec<Card>),
@@ -9,35 +9,41 @@ enum Hands {
     HighCard(Vec<Card>),
 }
 
-impl Into<Hands> for Vec<Card> {
-    fn into(self) -> Hands {
+impl From<Vec<Card>> for Hands {
+    fn from(value: Vec<Card>) -> Self {
         let mut counts = std::collections::HashMap::new();
-        for card in self.iter() {
+        for card in value.iter() {
             *counts.entry(card).or_insert(0) += 1;
         }
 
         let mut counts = counts.into_iter().collect::<Vec<_>>();
         counts.sort_by(|a, b| b.1.cmp(&a.1));
         match counts[0].1 {
-            5 => Hands::FiveOfAKind(self),
-            4 => Hands::FourOfAKind(self),
+            5 => Hands::FiveOfAKind(value),
+            4 => Hands::FourOfAKind(value),
             3 => {
                 if counts[1].1 == 2 {
-                    Hands::FullHouse(self)
+                    Hands::FullHouse(value)
                 } else {
-                    Hands::ThreeOfAKind(self)
+                    Hands::ThreeOfAKind(value)
                 }
             }
             2 => {
                 if counts[1].1 == 2 {
-                    Hands::TwoPairs(self)
+                    Hands::TwoPairs(value)
                 } else {
-                    Hands::OnePair(self)
+                    Hands::OnePair(value)
                 }
             }
-            1 => Hands::HighCard(self),
+            1 => Hands::HighCard(value),
             _ => panic!("invalid card"),
         }
+    }
+}
+
+impl PartialOrd for Hands {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
