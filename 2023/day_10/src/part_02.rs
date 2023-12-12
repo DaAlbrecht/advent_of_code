@@ -1,44 +1,13 @@
-use rstest::rstest;
-mod part_02;
+use std::collections::HashSet;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Tiles {
-    Vertical(Tile),
-    Horizontal(Tile),
-    North2East(Tile),
-    North2West(Tile),
-    South2West(Tile),
-    South2East(Tile),
-    Ground(Tile),
-    Start(Tile),
+use crate::{crate_grid, peek_neighbors, Direction, Point, Tiles};
+
+enum Status {
+    In,
+    Out,
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Direction {
-    North,
-    South,
-    East,
-    West,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-struct Tile {
-    position: Point,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-struct Point {
-    x: usize,
-    y: usize,
-}
-
-fn main() {
-    let input = std::fs::read_to_string("puzzle").expect("Unable to open file");
-    println!("Part 01: {}", part_01(&input));
-    println!("Part 02: {}", part_02::part_02(&input));
-}
-
-fn part_01(input: &str) -> u64 {
+pub fn part_02(input: &str) -> u64 {
     let grid = crate_grid(input);
 
     let start = grid
@@ -207,116 +176,55 @@ fn part_01(input: &str) -> u64 {
     let path_a = iters.next().expect("No path found");
     let path_b = iters.next().expect("No path found");
 
-    let end_position = path_a
-        .zip(path_b)
-        .position(|(a, b)| a.1 == b.1)
-        .expect("No path found");
-    end_position as u64 + 1
-}
+    let mut combined_path_iter = path_a.zip(path_b);
 
-fn crate_grid(input: &str) -> Vec<Vec<Tiles>> {
-    input
+    let mut tiles_location = HashSet::new();
+    tiles_location.insert(start);
+    while let Some((path_a_point, path_b_point)) = combined_path_iter.next() {
+        tiles_location.insert(path_a_point.1);
+        tiles_location.insert(path_b_point.1);
+
+        if path_a_point.1 == path_b_point.1 {
+            //all tiles are visited
+            break;
+        }
+    }
+
+    let result = input
         .lines()
         .enumerate()
         .map(|(y, line)| {
+            let mut status = Status::Out;
             line.chars()
                 .enumerate()
-                .map(|(x, tile)| match tile {
-                    '|' => Tiles::Vertical(Tile {
-                        position: Point { x, y },
-                    }),
-                    '-' => Tiles::Horizontal(Tile {
-                        position: Point { x, y },
-                    }),
-                    'L' => Tiles::North2East(Tile {
-                        position: Point { x, y },
-                    }),
-                    'J' => Tiles::North2West(Tile {
-                        position: Point { x, y },
-                    }),
-                    '7' => Tiles::South2West(Tile {
-                        position: Point { x, y },
-                    }),
-                    'F' => Tiles::South2East(Tile {
-                        position: Point { x, y },
-                    }),
-                    '.' => Tiles::Ground(Tile {
-                        position: Point { x, y },
-                    }),
-                    'S' => Tiles::Start(Tile {
-                        position: Point { x, y },
-                    }),
-                    _ => panic!("Invalid tile"),
+                .filter(|(x, _)| {
+                    let point = Point { x: *x, y };
+                    let tiles_type = grid[point.y][point.x];
+                    if tiles_location.contains(&point) {
+                        let crossed = match tiles_type {
+                            Tiles::Start(_)
+                            | Tiles::Vertical(_)
+                            | Tiles::South2East(_)
+                            | Tiles::South2West(_) => true,
+                            _ => false,
+                        };
+
+                        if crossed {
+                            status = match status {
+                                Status::In => Status::Out,
+                                Status::Out => Status::In,
+                            };
+                        }
+                        false
+                    } else {
+                        match status {
+                            Status::In => true,
+                            Status::Out => false,
+                        }
+                    }
                 })
-                .collect()
+                .count()
         })
-        .collect()
-}
-
-fn peek_neighbors(grid: &[Vec<Tiles>], pos: Point) -> Vec<&Tiles> {
-    let mut neighbors = Vec::new();
-
-    if pos.x > 0 && pos.y > 0 {
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x + 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x - 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y + 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y - 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-    } else if pos.x == 0 && pos.y > 0 {
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x + 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y + 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y - 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-    } else if pos.x > 0 && pos.y == 0 {
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x + 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x - 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y + 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-    } else if pos.x == 0 && pos.y == 0 {
-        if let Some(tile) = grid.get(pos.y).and_then(|line| line.get(pos.x + 1)) {
-            neighbors.push(tile);
-        }
-        if let Some(tile) = grid.get(pos.y + 1).and_then(|line| line.get(pos.x)) {
-            neighbors.push(tile);
-        }
-    }
-    neighbors
-}
-
-#[rstest]
-#[case(
-    ".....
-.S-7.
-.|.|.
-.L-J.
-.....",
-    4
-)]
-#[case(
-    "..F7.
-.FJ|.
-SJ.L7
-|F--J
-LJ...",
-    8
-)]
-fn two_simple_cases(#[case] input: &str, #[case] expected: u64) {
-    assert_eq!(part_01(input), expected);
+        .sum::<usize>();
+    result as u64
 }
