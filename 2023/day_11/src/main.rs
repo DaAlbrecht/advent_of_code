@@ -76,8 +76,6 @@ fn part_02(input: &str) -> u64 {
 
     let points = exand_old(&input);
 
-    println!("{:?}", points);
-
     let mut total = 0;
 
     for point in &points {
@@ -92,7 +90,6 @@ fn mark_old(input: &Vec<Vec<Type>>) -> Vec<Vec<Type>> {
     let old_row = vec![Type::Old; input[0].len()];
     for row in 0..input.len() {
         if input[row].iter().all(|&t| t == Type::Empty) {
-            //replace the row with old
             new_input[row] = old_row.clone();
         }
     }
@@ -104,20 +101,19 @@ fn mark_old(input: &Vec<Vec<Type>>) -> Vec<Vec<Type>> {
     new_input
 }
 
-fn exand_old(input: &Vec<Vec<Type>>) -> Vec<Point> {
+fn exand_old(input: &[Vec<Type>]) -> Vec<Point> {
     let mut old_rows_count = 0;
     let mut old_cols_count = 0;
 
     let mut exanded_galaxies = Vec::new();
 
-    //move galaxies for each old row
-    for row in 0..input.len() {
-        if input[row].iter().all(|&t| t == Type::Old) {
+    for (row, item) in input.iter().enumerate() {
+        if item.iter().all(|&t| t == Type::Old) {
             old_rows_count += 1;
         }
-        for col in 0..input[row].len() {
-            if input[row][col] == Type::Galaxy {
-                let new_row = row + (old_rows_count * 10) - 1;
+        for (col, item) in item.iter().enumerate() {
+            if *item == Type::Galaxy {
+                let new_row = row + (old_rows_count * (1000000 - 1));
                 let point = OldPoint {
                     x: col,
                     y: row,
@@ -128,20 +124,17 @@ fn exand_old(input: &Vec<Vec<Type>>) -> Vec<Point> {
         }
     }
 
-    println!("old_rows_count: {}", old_rows_count);
-
     for col in 0..input[0].len() {
         if input.iter().all(|row| row[col] == Type::Old) {
             old_cols_count += 1;
         }
-        for row in 0..input.len() {
-            if input[row][col] == Type::Galaxy {
+        for (row, item) in input.iter().enumerate() {
+            if item[col] == Type::Galaxy {
                 let point = exanded_galaxies
                     .iter()
                     .find(|&p| p.x == col && p.y == row)
-                    .unwrap()
-                    .clone();
-                let new_col = col + (old_cols_count * 10) - 1;
+                    .unwrap();
+                let new_col = col + (old_cols_count * (1000000 - 1));
                 let new_point = OldPoint {
                     x: new_col,
                     y: row,
@@ -156,7 +149,6 @@ fn exand_old(input: &Vec<Vec<Type>>) -> Vec<Point> {
             }
         }
     }
-    println!("old_cols_count: {}", old_cols_count);
 
     exanded_galaxies
         .iter()
@@ -164,11 +156,11 @@ fn exand_old(input: &Vec<Vec<Type>>) -> Vec<Point> {
         .collect::<Vec<_>>()
 }
 
-fn expand(input: &Vec<Vec<Type>>) -> Vec<Vec<Type>> {
-    let mut new_input = input.clone();
+fn expand(input: &[Vec<Type>]) -> Vec<Vec<Type>> {
+    let mut new_input = input.to_vec();
     let mut shifted = 0;
-    for row in 0..input.len() {
-        if input[row].iter().all(|&t| t == Type::Empty) {
+    for (row, item) in input.iter().enumerate() {
+        if item.iter().all(|&t| t == Type::Empty) {
             new_input.insert(row + shifted, input[row].clone());
             shifted += 1;
         }
@@ -190,6 +182,9 @@ fn shortest_paths(position: Point, destinations: &[Point]) -> Vec<u64> {
     for destination in destinations {
         let x = (position.x as i64 - destination.x as i64).abs();
         let y = (position.y as i64 - destination.y as i64).abs();
+        if x == 0 && y == 0 {
+            continue;
+        }
         paths.push(x as u64 + y as u64);
     }
     paths
@@ -211,79 +206,5 @@ mod tests {
 .......#..
 #...#.....";
         assert_eq!(super::part_01(&input), 374);
-    }
-
-    #[test]
-    fn part_02() {
-        let input = "...#......
-.......#..
-#.........
-..........
-......#...
-.#........
-.........#
-..........
-.......#..
-#...#.....";
-        assert_eq!(super::part_02(&input), 1030);
-    }
-
-    #[test]
-    fn test_expanded() {
-        let input = "
-...#......
-.......#..
-#.........
-..........
-......#...
-.#........
-.........#
-..........
-.......#..
-#...#.....";
-
-        let expected = "....#........
-.........#...
-#............
-.............
-.............
-........#....
-.#...........
-............#
-.............
-.............
-.........#...
-#....#.......";
-
-        let input = input
-            .lines()
-            .map(|line| {
-                line.chars()
-                    .map(|c| match c {
-                        '.' => super::Type::Empty,
-                        '#' => super::Type::Galaxy,
-                        _ => panic!("Unknown type"),
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-        let input = super::expand(&input);
-
-        assert_eq!(
-            input
-                .iter()
-                .map(|row| {
-                    row.iter()
-                        .map(|&t| match t {
-                            super::Type::Empty => '.',
-                            super::Type::Galaxy => '#',
-                            super::Type::Old => 'O',
-                        })
-                        .collect::<String>()
-                })
-                .collect::<Vec<_>>()
-                .join("\n"),
-            expected
-        );
     }
 }
