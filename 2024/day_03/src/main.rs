@@ -1,5 +1,3 @@
-use std::usize;
-
 fn main() {
     let input = std::fs::read_to_string("input").unwrap();
     println!("part_01: {}", part_01(input.as_str()));
