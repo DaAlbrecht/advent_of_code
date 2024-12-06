@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use grid::Grid;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 enum Direction {
     Top,
     Right,
@@ -49,8 +49,7 @@ fn part_01(input: &str) -> usize {
     distinct_positions.insert(guard_pos.clone());
 
     let mut direction = Direction::Top;
-    while let (next_pos, Some(next_char)) = move_guard(guard_pos.clone(), &grid, direction.clone())
-    {
+    while let (next_pos, Some(next_char)) = move_guard(guard_pos.clone(), &grid, direction) {
         distinct_positions.insert(guard_pos.clone());
         match next_char {
             '#' => match direction {
@@ -111,7 +110,7 @@ fn part_02(input: &str) -> usize {
             let mut direction = Direction::Top;
             let mut guard_pos = guard_start_pos.clone();
             while let (next_pos, Some(next_char)) =
-                move_guard(guard_pos.clone(), possible_grid, direction.clone())
+                move_guard(guard_pos.clone(), possible_grid, direction)
             {
                 match next_char {
                     '#' => match direction {
@@ -121,7 +120,7 @@ fn part_02(input: &str) -> usize {
                             if *entry > 1 {
                                 return true;
                             }
-                            direction = Direction::Right
+                            direction = Direction::Right;
                         }
                         Direction::Right => {
                             let entry = pair_counts.entry((next_pos, direction)).or_insert(0);
@@ -129,7 +128,7 @@ fn part_02(input: &str) -> usize {
                             if *entry > 1 {
                                 return true;
                             }
-                            direction = Direction::Down
+                            direction = Direction::Down;
                         }
                         Direction::Down => {
                             let entry = pair_counts.entry((next_pos, direction)).or_insert(0);
@@ -137,7 +136,7 @@ fn part_02(input: &str) -> usize {
                             if *entry > 1 {
                                 return true;
                             }
-                            direction = Direction::Left
+                            direction = Direction::Left;
                         }
                         Direction::Left => {
                             let entry = pair_counts.entry((next_pos, direction)).or_insert(0);
@@ -145,7 +144,7 @@ fn part_02(input: &str) -> usize {
                             if *entry > 1 {
                                 return true;
                             }
-                            direction = Direction::Top
+                            direction = Direction::Top;
                         }
                     },
                     _ => guard_pos = next_pos,
