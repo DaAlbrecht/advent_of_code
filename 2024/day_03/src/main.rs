@@ -65,7 +65,7 @@ impl Lexer {
                 return produkt;
             }
             self.read_conditionals();
-            return Some(0);
+            Some(0)
         } else {
             let produkt = self.read_mul();
 
@@ -73,7 +73,7 @@ impl Lexer {
                 self.read_char();
                 return Some(0);
             }
-            return produkt;
+            produkt
         }
     }
 
@@ -158,7 +158,6 @@ impl Lexer {
                     return;
                 }
                 self.mul_enabled = true;
-                return;
             }
             b'n' => {
                 self.read_char();
@@ -179,9 +178,8 @@ impl Lexer {
                     return;
                 }
                 self.mul_enabled = false;
-                return;
             }
-            _ => return,
+            _ => (),
         };
     }
 }
