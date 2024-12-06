@@ -77,7 +77,7 @@ fn part_02(input: &str) -> usize {
         .collect::<Vec<Vec<usize>>>();
     let valid_updates = invalid_updates
         .iter()
-        .map(|invalid_update| order_update(&invalid_update, ordering_rules.clone()))
+        .map(|invalid_update| order_update(invalid_update, ordering_rules.clone()))
         .collect::<Vec<Vec<usize>>>();
 
     valid_updates
@@ -97,7 +97,7 @@ fn valid_update(update: &[usize], ordering_rules: HashMap<usize, Vec<usize>>) ->
 
             return idx.iter().all(|y_index| &x_index < y_index);
         }
-        return true;
+        true
     })
 }
 
