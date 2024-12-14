@@ -1,10 +1,8 @@
 [package]
-name = "day_12"
+name = "day_13"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
 good_lp = { version = "*", features = ["microlp"], default-features = false }
-grid = "0.15.0"
-itertools = "0.13.0"
