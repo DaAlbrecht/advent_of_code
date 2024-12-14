@@ -7,6 +7,7 @@ type Machine = ((f64, f64), (f64, f64), (f64, f64));
 fn main() {
     let input = std::fs::read_to_string("input").unwrap();
     println!("part_01: {}", part_01(input.as_str()));
+    println!("part_02: {}", part_02(input.as_str()));
 }
 
 fn part_01(input: &str) -> usize {
@@ -47,6 +48,62 @@ fn part_01(input: &str) -> usize {
                 (button_a_x, button_a_y),
                 (button_b_x, button_b_y),
                 (prize_x, prize_y),
+            )
+        })
+        .collect::<Vec<Machine>>();
+
+    machines
+        .iter()
+        .filter_map(|machine| match solve(*machine) {
+            Ok(result) => {
+                let a = result.0.round() as usize * 3;
+                let b = result.1.round() as usize;
+
+                Some(a + b)
+            }
+            Err(_) => None,
+        })
+        .sum()
+}
+
+fn part_02(input: &str) -> usize {
+    let machines = input
+        .split("\n\n")
+        .map(|machine| {
+            let mut iter = machine.lines();
+            let (x, y) = iter
+                .next()
+                .expect("button A to be present")
+                .split_once(',')
+                .expect("each line of a machine in aoc has a ,");
+            let button_a_x = x
+                .strip_prefix("Button A: X+")
+                .unwrap()
+                .parse::<f64>()
+                .unwrap();
+            let button_a_y = y.strip_prefix(" Y+").unwrap().parse::<f64>().unwrap();
+            let (x, y) = iter
+                .next()
+                .expect("button B to be present")
+                .split_once(',')
+                .expect("each line of a machine in aoc has a ,");
+            let button_b_x = x
+                .strip_prefix("Button B: X+")
+                .unwrap()
+                .parse::<f64>()
+                .unwrap();
+            let button_b_y = y.strip_prefix(" Y+").unwrap().parse::<f64>().unwrap();
+            let (x, y) = iter
+                .next()
+                .expect("Prize to be present")
+                .split_once(',')
+                .expect("each line of a machine in aoc has a ,");
+            let prize_x = x.strip_prefix("Prize: X=").unwrap().parse::<f64>().unwrap();
+            let prize_y = y.strip_prefix(" Y=").unwrap().parse::<f64>().unwrap();
+            (
+                (button_a_x, button_a_y),
+                (button_b_x, button_b_y),
+                (prize_x + 10000000000000.0, prize_y + 10000000000000.0),
             )
         })
         .collect::<Vec<Machine>>();
