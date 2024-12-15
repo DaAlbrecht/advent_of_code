@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::Write;
+
 use glam::IVec2;
 
 fn main() {
@@ -51,6 +54,56 @@ fn part_01(input: &str, grid_size: IVec2) -> usize {
                 .count()
         })
         .product()
+}
+
+fn part_02(input: &str, grid_size: IVec2) -> usize {
+    let mut robots = input
+        .lines()
+        .map(|line| {
+            let (pos, velocity) = line.split_once(' ').unwrap();
+            let (pos_x, pos_y) = pos.strip_prefix("p=").unwrap().split_once(',').unwrap();
+            let (vel_x, vel_y) = velocity
+                .strip_prefix("v=")
+                .unwrap()
+                .split_once(',')
+                .unwrap();
+            let pos: IVec2 = IVec2::new(pos_x.parse().unwrap(), pos_y.parse().unwrap());
+            let velocity: IVec2 = IVec2::new(vel_x.parse().unwrap(), vel_y.parse().unwrap());
+            (pos, velocity)
+        })
+        .collect::<Vec<(IVec2, IVec2)>>();
+
+    let mut file = File::create("iterations_output.txt").expect("Unable to create file");
+
+    for iteration in 1..15000 {
+        for robot in &mut robots {
+            robot.0 = (robot.0 + robot.1).rem_euclid(grid_size);
+        }
+
+        writeln!(file, "Iteration {}:", iteration).expect("Unable to write to file");
+
+        debug_grid(&robots, grid_size, &mut file);
+
+        writeln!(file).expect("Unable to write to file");
+    }
+
+    unreachable!()
+}
+
+fn debug_grid(robots: &[(IVec2, IVec2)], grid_size: IVec2, file: &mut File) {
+    let mut grid = vec![vec!['.'; grid_size.x as usize]; grid_size.y as usize];
+
+    for (pos, _) in robots {
+        let x = pos.x as usize;
+        let y = pos.y as usize;
+        if x < grid_size.x as usize && y < grid_size.y as usize {
+            grid[y][x] = '#';
+        }
+    }
+
+    for row in grid.iter() {
+        writeln!(file, "{}", row.iter().collect::<String>()).expect("Unable to write to file");
+    }
 }
 
 #[cfg(test)]
