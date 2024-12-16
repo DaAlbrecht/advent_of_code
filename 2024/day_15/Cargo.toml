@@ -1,0 +1,9 @@
+[package]
+name = "day_15"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+glam = "0.29.2"
+grid = "0.15.0"
+
